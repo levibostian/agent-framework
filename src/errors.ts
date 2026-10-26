@@ -1,0 +1,22 @@
+export const EXIT_OK = 0;
+export const EXIT_CONFIG = 1;
+export const EXIT_USAGE = 2;
+
+/** A failure with a message meant for the user and a process exit code. */
+export class AgentError extends Error {
+  readonly exitCode: number;
+
+  constructor(message: string, exitCode: number = EXIT_CONFIG) {
+    super(message);
+    this.name = "AgentError";
+    this.exitCode = exitCode;
+  }
+}
+
+/** Bad command line: unknown flag, missing argument, extra argument. */
+export class UsageError extends AgentError {
+  constructor(message: string) {
+    super(message, EXIT_USAGE);
+    this.name = "UsageError";
+  }
+}
