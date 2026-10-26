@@ -70,7 +70,8 @@ export function runCli(args: string[], options: CliOptions = {}): CliResult {
   delete env.VISUAL;
   delete env.EDITOR;
 
-  if (options.home !== undefined) env.AGENT_HOME = options.home;
+  // Never fall back to the user's real ~/.agent, even for a test that forgets `home`.
+  env.AGENT_HOME = options.home ?? tempDir();
   if (options.models !== undefined) env.AGENT_MODELS = options.models;
   if (options.path !== undefined) env.PATH = options.path;
   for (const [key, value] of Object.entries(options.env ?? {})) {
