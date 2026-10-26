@@ -142,6 +142,10 @@ Unknown fields are an error, and so is setting both `system` and `system-cmd`.
 directory. Running an agent inside a repo picks up that repo's skills as well as the
 agent's own. A configured path that does not exist is an error.
 
+Skills discovered from the working directory are project-local, so Pi only loads them
+once you trust the project (`pi -a`, or a trust setting). `agent` never passes `-a` for
+you — trusting a repo is your call. Configured `skills` are always loaded.
+
 **Model map** is a flat JSON object:
 
 ```json
