@@ -24,9 +24,10 @@ function optionalString(value: unknown, key: string, source: string): string | u
 
 function optionalStringArray(value: unknown, key: string, source: string): string[] | undefined {
   if (value === undefined) return undefined;
-  if (!Array.isArray(value)) fail(source, `"${key}" must be an array of strings`);
+  const notStrings = `"${key}" must be an array of strings`;
+  if (!Array.isArray(value)) fail(source, notStrings);
   return value.map((item) => {
-    if (typeof item !== "string") fail(source, `"${key}" must be an array of strings`);
+    if (typeof item !== "string") fail(source, notStrings);
     return item;
   });
 }

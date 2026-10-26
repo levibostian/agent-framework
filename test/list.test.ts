@@ -6,14 +6,13 @@ import { cleanupTempDirs, runCli, tempDir, writeAgent, writeFile } from "./helpe
 afterAll(cleanupTempDirs);
 
 const HELLO = "description: Greets people.\nmodel: m\n";
-const REVIEWER = "description: Reviews diffs for correctness.\nmodel: m\n";
 const QUIET = "model: m\n";
 
 describe("agent list", () => {
   test("prints names aligned to the longest name, with descriptions", () => {
     const root = tempDir();
     writeAgent(root, "hello", "agent.yaml", HELLO);
-    writeAgent(root, "reviewer", "agent.yaml", REVIEWER);
+    writeAgent(root, "reviewer", "agent.yaml", "description: Reviews diffs for correctness.\nmodel: m\n");
     writeAgent(root, "quiet", "agent.yaml", QUIET);
 
     const result = runCli(["list"], { home: root });

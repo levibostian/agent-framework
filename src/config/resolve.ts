@@ -6,9 +6,6 @@ import type { Paths } from "../paths.ts";
 import type { ResolvedAgent } from "../runtime/types.ts";
 import type { LoadedAgent } from "./load.ts";
 
-/** A model value is a template reference only when it is exactly `:key:`. */
-const TEMPLATE = /^:(.+):$/;
-
 export interface ResolveOptions {
   /** Working directory for `system-cmd`. Defaults to the caller's directory. */
   cwd?: string;
@@ -54,7 +51,8 @@ function resolveSystemPrompt(
 
 /** Resolve `:key:` against the model map. Anything else is a literal. */
 export function resolveModel(model: string, mapPath: string): string {
-  const match = TEMPLATE.exec(model);
+  // A model value is a template reference only when it is exactly `:key:`.
+  const match = /^:(.+):$/.exec(model);
   if (match === null) return model;
   const key = match[1] as string;
 

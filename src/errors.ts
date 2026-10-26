@@ -12,11 +12,3 @@ export class AgentError extends Error {
     this.exitCode = exitCode;
   }
 }
-
-/** Bad command line: unknown flag, missing argument, extra argument. */
-export class UsageError extends AgentError {
-  constructor(message: string) {
-    super(message, EXIT_USAGE);
-    this.name = "UsageError";
-  }
-}

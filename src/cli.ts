@@ -1,4 +1,4 @@
-import { UsageError } from "./errors.ts";
+import { AgentError, EXIT_USAGE } from "./errors.ts";
 
 export type Command = "run" | "list" | "edit";
 
@@ -13,12 +13,7 @@ export interface Args {
   help: boolean;
 }
 
-const COMMANDS: readonly string[] = ["run", "list", "edit"];
-
-const VALUE_FLAGS: Record<string, "home" | "models"> = {
-  "--home": "home",
-  "--models": "models",
-};
+const COMMANDS: readonly Command[] = ["run", "list", "edit"];
 
 const USAGE = `Usage:
   agent run <name> [prompt]    Run an agent: one-shot with a prompt, interactive without.
@@ -32,15 +27,11 @@ Options:
   --json           Print machine-readable output (list)
   -h, --help       Show this help`;
 
-const RUN_USAGE = `Usage: agent run [--home <dir>] [--models <file>] [--dry-run] <name> [prompt]`;
-const LIST_USAGE = `Usage: agent list [--home <dir>] [--models <file>] [--json]`;
-const EDIT_USAGE = `Usage: agent edit [--home <dir>] [--models <file>] <name>`;
-
 /** Top-level help, or help for one command. */
 export function helpText(command?: Command): string {
   switch (command) {
     case "run":
-      return `${RUN_USAGE}
+      return `Usage: agent run [--home <dir>] [--models <file>] [--dry-run] <name> [prompt]
 
 Run an agent by name. With a prompt the runtime executes one request and exits;
 without one it opens an interactive session.
@@ -50,7 +41,7 @@ Options:
   --models <file>  Model map (default: $AGENT_MODELS, else <home>/models.json)
   --dry-run        Print the runtime command instead of running it`;
     case "list":
-      return `${LIST_USAGE}
+      return `Usage: agent list [--home <dir>] [--models <file>] [--json]
 
 List every agent in the agent root with its description. Read-only: never runs an
 agent or its system-cmd.
@@ -60,7 +51,7 @@ Options:
   --models <file>  Model map (default: $AGENT_MODELS, else <home>/models.json)
   --json           Print [{ name, description, dir }]`;
     case "edit":
-      return `${EDIT_USAGE}
+      return `Usage: agent edit [--home <dir>] [--models <file>] <name>
 
 Open an agent's directory in $VISUAL or $EDITOR, falling back to the OS opener on
 the config file. The config is never parsed or rewritten.
@@ -73,12 +64,16 @@ Options:
   }
 }
 
+function usageError(message: string, command?: Command): AgentError {
+  return new AgentError(`${message}\n\n${helpText(command)}`, EXIT_USAGE);
+}
+
 export function parseArgs(argv: string[]): Args {
   const args: Args = { positionals: [], dryRun: false, json: false, help: false };
 
   const takeCommand = (token: string): void => {
-    if (!COMMANDS.includes(token)) {
-      throw new UsageError(`unknown command: ${token}\n\n${USAGE}`);
+    if (!COMMANDS.includes(token as Command)) {
+      throw usageError(`unknown command: ${token}`);
     }
     args.command = token as Command;
   };
@@ -95,11 +90,11 @@ export function parseArgs(argv: string[]): Args {
     }
 
     if (token.startsWith("-") && token !== "-") {
-      const valueFlag = VALUE_FLAGS[token];
-      if (valueFlag) {
+      if (token === "--home" || token === "--models") {
         const value = argv[++i];
-        if (value === undefined) throw new UsageError(`${token} requires a value`);
-        args[valueFlag] = value;
+        if (value === undefined) throw usageError(`${token} requires a value`, args.command);
+        if (token === "--home") args.home = value;
+        else args.models = value;
         continue;
       }
       switch (token) {
@@ -114,7 +109,7 @@ export function parseArgs(argv: string[]): Args {
           args.help = true;
           continue;
         default:
-          throw new UsageError(`unknown option: ${token}\n\n${USAGE}`);
+          throw usageError(`unknown option: ${token}`, args.command);
       }
     }
 
@@ -123,7 +118,7 @@ export function parseArgs(argv: string[]): Args {
   }
 
   if (args.help) return args;
-  if (args.command === undefined) throw new UsageError(`no command given\n\n${USAGE}`);
+  if (args.command === undefined) throw usageError("no command given");
   validate(args);
   return args;
 }
@@ -132,19 +127,17 @@ function validate(args: Args): void {
   const command = args.command as Command;
 
   if (command !== "run" && args.dryRun) {
-    throw new UsageError(`--dry-run is only valid for run\n\n${helpText(command)}`);
+    throw usageError("--dry-run is only valid for run", command);
   }
   if (command !== "list" && args.json) {
-    throw new UsageError(`--json is only valid for list\n\n${helpText(command)}`);
+    throw usageError("--json is only valid for list", command);
   }
 
   const extra = args.positionals.length;
   if (command === "list") {
-    if (extra > 0) throw new UsageError(`list takes no arguments\n\n${LIST_USAGE}`);
+    if (extra > 0) throw usageError("list takes no arguments", command);
     return;
   }
-  if (extra === 0) throw new UsageError(`${command} requires an agent name\n\n${helpText(command)}`);
-  if (extra > (command === "run" ? 2 : 1)) {
-    throw new UsageError(`too many arguments\n\n${helpText(command)}`);
-  }
+  if (extra === 0) throw usageError(`${command} requires an agent name`, command);
+  if (extra > (command === "run" ? 2 : 1)) throw usageError("too many arguments", command);
 }

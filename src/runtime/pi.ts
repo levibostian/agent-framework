@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { shellQuote, waitForExit } from "../process.ts";
-import type { ResolvedAgent, RunRequest, Runner } from "./types.ts";
+import type { RunRequest, Runner } from "./types.ts";
 
 /**
  * Runs an agent on Pi by spawning `pi` as a subprocess. All Pi-specific knowledge
@@ -16,7 +16,11 @@ export class PiRunner implements Runner {
     if (prompt !== undefined) argv.push("--print");
     argv.push("--model", agent.model);
     if (agent.systemPrompt !== "") argv.push("--system-prompt", agent.systemPrompt);
-    pushTools(argv, agent);
+    if (agent.tools !== undefined) {
+      // An empty list means no tools; an absent field means the runtime's default set.
+      if (agent.tools.length === 0) argv.push("--no-tools");
+      else argv.push("--tools", agent.tools.join(","));
+    }
     for (const skill of agent.skills) argv.push("--skill", skill);
     if (prompt !== undefined) argv.push("--", prompt);
 
@@ -32,13 +36,4 @@ export class PiRunner implements Runner {
     const child = spawn(this.command, argv, { stdio: "inherit" });
     return await waitForExit(child, `failed to run "${this.command}"`);
   }
-}
-
-function pushTools(argv: string[], agent: ResolvedAgent): void {
-  if (agent.tools === undefined) return; // runtime default tool set
-  if (agent.tools.length === 0) {
-    argv.push("--no-tools");
-    return;
-  }
-  argv.push("--tools", agent.tools.join(","));
 }

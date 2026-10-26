@@ -2,8 +2,6 @@ import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-export const ENTRY = join(import.meta.dir, "..", "src", "index.ts");
-
 const tempDirs: string[] = [];
 
 /** A fresh temp directory, removed by `cleanupTempDirs`. */
@@ -81,7 +79,7 @@ export function runCli(args: string[], options: CliOptions = {}): CliResult {
   }
 
   const result = Bun.spawnSync({
-    cmd: [process.execPath, ENTRY, ...args],
+    cmd: [process.execPath, join(import.meta.dir, "..", "src", "index.ts"), ...args],
     env,
     cwd: options.cwd ?? process.cwd(),
     stdout: "pipe",

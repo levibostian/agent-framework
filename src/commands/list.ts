@@ -41,14 +41,15 @@ export async function listCommand(options: ListOptions): Promise<number> {
 
   if (options.json) {
     process.stdout.write(`${JSON.stringify(agents, null, 2)}\n`);
-  } else if (agents.length === 0) {
-    if (broken.length === 0) process.stdout.write(`no agents in ${options.paths.home}\n`);
-  } else {
+  } else if (agents.length > 0) {
     // Names are sorted by `agentDirs`, so the table is stable between runs.
     const width = Math.max(...agents.map((agent) => agent.name.length)) + 3;
     for (const agent of agents) {
-      process.stdout.write(`${agent.description === undefined ? agent.name : agent.name.padEnd(width) + agent.description}\n`);
+      const line = agent.description === undefined ? agent.name : agent.name.padEnd(width) + agent.description;
+      process.stdout.write(`${line}\n`);
     }
+  } else if (broken.length === 0) {
+    process.stdout.write(`no agents in ${options.paths.home}\n`);
   }
 
   return broken.length > 0 ? EXIT_CONFIG : EXIT_OK;

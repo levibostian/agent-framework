@@ -8,19 +8,13 @@ import { validateConfig, type AgentConfig } from "./schema.ts";
 /** Config file names, in the order they are reported when more than one exists. */
 const CONFIG_FILES = ["agent.json", "agent.yaml", "agent.yml"] as const;
 
-const NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
-
 /** Reject anything that could escape the agent root, before touching the filesystem. */
 export function validateName(name: string): void {
-  if (!NAME_PATTERN.test(name) || name === "." || name === "..") {
+  if (!/^[A-Za-z0-9._-]+$/.test(name) || name === "." || name === "..") {
     throw new AgentError(
       `invalid agent name "${name}": use letters, digits, ".", "_" and "-" only`,
     );
   }
-}
-
-function agentDir(paths: Paths, name: string): string {
-  return join(paths.home, name);
 }
 
 function isDirectory(path: string): boolean {
@@ -30,7 +24,7 @@ function isDirectory(path: string): boolean {
 /** Validate the name and return the agent directory, or throw the standard not-found error. */
 export function requireAgentDir(paths: Paths, name: string): string {
   validateName(name);
-  const dir = agentDir(paths, name);
+  const dir = join(paths.home, name);
   if (!isDirectory(dir)) {
     throw new AgentError(`agent "${name}" not found in ${paths.home}`);
   }
