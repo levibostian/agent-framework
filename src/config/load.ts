@@ -6,7 +6,7 @@ import type { Paths } from "../paths.ts";
 import { validateConfig, type AgentConfig } from "./schema.ts";
 
 /** Config file names, in the order they are reported when more than one exists. */
-export const CONFIG_FILES = ["agent.json", "agent.yaml", "agent.yml"] as const;
+const CONFIG_FILES = ["agent.json", "agent.yaml", "agent.yml"] as const;
 
 const NAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 
@@ -19,7 +19,7 @@ export function validateName(name: string): void {
   }
 }
 
-export function agentDir(paths: Paths, name: string): string {
+function agentDir(paths: Paths, name: string): string {
   return join(paths.home, name);
 }
 
@@ -69,7 +69,6 @@ function parseConfigFile(path: string): unknown {
 export interface LoadedAgent {
   name: string;
   dir: string;
-  configPath: string;
   config: AgentConfig;
 }
 
@@ -78,7 +77,7 @@ export function loadAgent(paths: Paths, name: string): LoadedAgent {
   const dir = requireAgentDir(paths, name);
   const configPath = configFilePath(dir);
   const config = validateConfig(parseConfigFile(configPath), configPath);
-  return { name, dir, configPath, config };
+  return { name, dir, config };
 }
 
 export interface AgentDirEntry {

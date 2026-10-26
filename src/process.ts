@@ -3,7 +3,7 @@ import { constants } from "node:os";
 import { AgentError } from "./errors.ts";
 
 /** Translate a child's exit status into the shell convention: signals become 128 + n. */
-export function exitCodeOf(code: number | null, signal: NodeJS.Signals | null): number {
+function exitCodeOf(code: number | null, signal: NodeJS.Signals | null): number {
   if (signal) return 128 + (constants.signals[signal] ?? 0);
   return code ?? 0;
 }

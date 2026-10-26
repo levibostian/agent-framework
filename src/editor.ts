@@ -12,7 +12,7 @@ export interface Launch {
  * The user's editor: `$VISUAL`, then `$EDITOR`. The value is split on whitespace so
  * a configured command such as `code --wait` works. Undefined when neither is set.
  */
-export function editorFromEnv(env: NodeJS.ProcessEnv = process.env): Launch | undefined {
+export function editorFromEnv(env: NodeJS.ProcessEnv): Launch | undefined {
   const value = env.VISUAL?.trim() || env.EDITOR?.trim();
   if (!value) return undefined;
   const [command, ...args] = value.split(/\s+/);

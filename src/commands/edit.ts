@@ -14,7 +14,7 @@ export interface EditOptions {
 export async function editCommand(options: EditOptions): Promise<number> {
   const dir = requireAgentDir(options.paths, options.name);
 
-  const editor = editorFromEnv();
+  const editor = editorFromEnv(process.env);
   if (editor !== undefined) {
     // Pass the directory: a terminal editor opens its file browser.
     return await spawnEditor({ command: editor.command, args: [...editor.args, dir] });

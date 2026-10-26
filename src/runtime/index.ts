@@ -14,5 +14,3 @@ export function getRunner(name: string = DEFAULT_RUNTIME): Runner {
       throw new AgentError(`unknown runtime "${name}" (available: ${DEFAULT_RUNTIME})`);
   }
 }
-
-export type { ResolvedAgent, RunRequest, Runner } from "./types.ts";

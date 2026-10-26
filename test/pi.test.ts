@@ -62,6 +62,35 @@ describe("PiRunner.buildArgv", () => {
     expect(runner.buildArgv({ agent: agent() })).toEqual(["--model", "openrouter/google/gemini-2.5-flash"]);
   });
 
+  test("interactive mode still carries the system prompt, tools and skills", () => {
+    const argv = runner.buildArgv({
+      agent: agent({ systemPrompt: "Be terse.", systemPromptSource: "config", tools: ["bash"], skills: ["/a"] }),
+    });
+
+    expect(argv).toEqual([
+      "--model",
+      "openrouter/google/gemini-2.5-flash",
+      "--system-prompt",
+      "Be terse.",
+      "--tools",
+      "bash",
+      "--skill",
+      "/a",
+    ]);
+  });
+
+  test("one-shot with skills but no system prompt or tools", () => {
+    expect(runner.buildArgv({ agent: agent({ skills: ["/a"] }), prompt: "hi" })).toEqual([
+      "--print",
+      "--model",
+      "openrouter/google/gemini-2.5-flash",
+      "--skill",
+      "/a",
+      "--",
+      "hi",
+    ]);
+  });
+
   test("an empty system prompt is omitted so the runtime default applies", () => {
     expect(runner.buildArgv({ agent: agent({ systemPrompt: "" }), prompt: "hi" })).not.toContain("--system-prompt");
   });

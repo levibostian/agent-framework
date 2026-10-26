@@ -11,16 +11,14 @@ export interface Paths {
   userHome: string;
 }
 
-export interface PathOverrides {
-  home?: string;
-  models?: string;
-}
-
 /**
  * Resolve the agent root and model map from flags, then env, then defaults.
  * Only this module reads `AGENT_HOME` / `AGENT_MODELS` / the home directory.
  */
-export function resolvePaths(overrides: PathOverrides = {}, env: NodeJS.ProcessEnv = process.env): Paths {
+export function resolvePaths(
+  overrides: { home?: string; models?: string } = {},
+  env: NodeJS.ProcessEnv = process.env,
+): Paths {
   const userHome = homedir();
   const home = resolve(overrides.home ?? env.AGENT_HOME ?? join(userHome, ".agent"));
   const models = resolve(overrides.models ?? env.AGENT_MODELS ?? join(home, "models.json"));
