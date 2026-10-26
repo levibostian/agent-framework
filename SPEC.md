@@ -48,6 +48,10 @@ Agents live in a single root directory:
 - Exactly one config file must exist in the directory. Zero or more than one is an error.
 - `~/.agent` is the default root. The root must be overridable (env var and/or CLI flag) so
   tests and alternate setups do not touch the user's real agents.
+- The root is enumerable: its immediate subdirectories that contain a valid config file are
+  the agents available on this machine. Listing agents is a read of this root.
+- The config file path is derivable from the name alone, so a consumer can open it without
+  loading it.
 - The agent directory holds metadata only. It is never the working directory of a run.
   A run uses the caller's current working directory.
 
@@ -64,6 +68,7 @@ A name is valid when it is non-empty and matches `[A-Za-z0-9._-]+`. Names must n
 | `system` | string | no | Static system prompt. |
 | `system-cmd` | string | no | A command whose stdout becomes the system prompt. Runs at invocation time, so the prompt can be dynamic. |
 | `tools` | string[] | no | Names of runtime built-in tools to enable (for example `bash`, `read`, `write`, `grep`). Omitted means "runtime default tool set". |
+| `skills` | string[] | no | Paths to skill files or directories to load for this agent. Omitted means "no configured skills". See [Skill resolution](#skill-resolution). |
 | `model` | string | yes | Model identifier, either literal or a template reference. See [Model resolution](#model-resolution). |
 
 Unknown fields are an error. Silently ignoring a typo turns a config bug into a silently
@@ -86,6 +91,9 @@ uses the runtime's own default system prompt.
   runtime can tell.
 - An empty `tools` array means "no tools", which is distinct from an omitted `tools` field
   meaning "runtime default".
+- `skills` adds skill locations on top of whatever the runtime discovers by itself. It never
+  removes or replaces discovery. An empty array is equivalent to omitting the field: this
+  agent configures no additional skills.
 
 ## Model resolution
 
@@ -117,6 +125,31 @@ Rules:
   supported; a resolved value is used verbatim.
 - The map path is overridable the same way the agent root is, for tests.
 
+## Skill resolution
+
+A skill is a directory containing `SKILL.md` (or a single Markdown skill file). The agent
+spec does not define skill contents; it defines only where an agent says its skills live.
+
+Each entry in `skills` is a path, resolved in this order:
+
+1. `~` at the start expands to the user's home directory.
+2. An absolute path is used as is.
+3. A relative path resolves against the **agent directory**, so an agent can ship its own
+   skills next to its config and stay portable.
+
+A resolved path that does not exist is an error, reported with the agent name and the
+original entry. Loading is the runtime's job; the spec only guarantees the paths.
+
+### Working-directory skills
+
+A run happens in the caller's current working directory, not in the agent directory. Any
+skills the runtime discovers there (for example a `.agents/skills/` directory in a checked
+out repository) load for that run automatically. This is deliberate: running an agent
+inside a codebase lets that codebase supply its own skills without editing the agent.
+
+Precedence: configured `skills` and working-directory skills are both additive. The spec
+does not define collision behavior; the runtime keeps its own rule and reports collisions.
+
 ## Normalized run request
 
 Resolution produces one runtime-agnostic value. This is the entire interface between the
@@ -130,6 +163,7 @@ ResolvedAgent {
   systemPrompt: string          // "" when neither system nor system-cmd was given
   systemPromptSource: "config" | "command" | "none"
   tools?:       string[]        // undefined means runtime default; [] means none
+  skills:       string[]        // absolute paths, ~ expanded, [] when unconfigured
   model:        string          // literal, templates already resolved
 }
 ```
@@ -161,8 +195,20 @@ An adapter binds this spec to a runtime. It must:
 
 The adapter is the only place runtime names appear. Adding a runtime means adding an
 adapter, not editing this spec. The default adapter today is Pi; it maps `system` to the
-runtime's system-prompt flag, `tools` to its tool-selection flag, and `model` to its model
-flag, and it invokes the runtime as a subprocess so the CLI stays decoupled from it.
+runtime's system-prompt flag, `tools` to its tool-selection flag, `skills` to its skill
+flag (one per path), and `model` to its model flag, and it invokes the runtime as a
+subprocess so the CLI stays decoupled from it.
+
+## Consumer commands
+
+Three commands consume this spec. They are listed here so their contract is defined once;
+their UX belongs to the CLI.
+
+- **run** — resolve an agent and execute it, one-shot or interactively.
+- **list** — enumerate the agent root and report each agent's name and `description`. Read
+  only: it must not execute `system-cmd`, resolve models, or touch the network.
+- **edit** — open an agent's directory in the user's editor so its config can be changed.
+  It never parses or rewrites the config.
 
 ## Maintenance note
 
