@@ -1,5 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { AgentError } from "./errors.ts";
+import { spawn } from "node:child_process";
 import { waitForExit } from "./process.ts";
 
 /** A command line to run: program plus arguments. */
@@ -31,13 +30,6 @@ export function openerFor(platform: NodeJS.Platform, target: string): Launch {
 
 /** Spawn and wait. stdio is inherited so a terminal editor owns the screen. */
 export async function spawnEditor(launch: Launch): Promise<number> {
-  let child: ChildProcess;
-  try {
-    child = spawn(launch.command, launch.args, { stdio: "inherit" });
-  } catch (error) {
-    throw new AgentError(
-      `failed to launch "${launch.command}": ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+  const child = spawn(launch.command, launch.args, { stdio: "inherit" });
   return await waitForExit(child, `failed to launch "${launch.command}"`);
 }

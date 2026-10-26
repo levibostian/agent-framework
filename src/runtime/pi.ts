@@ -1,5 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { AgentError } from "../errors.ts";
+import { spawn } from "node:child_process";
 import { shellQuote, waitForExit } from "../process.ts";
 import type { ResolvedAgent, RunRequest, Runner } from "./types.ts";
 
@@ -30,12 +29,7 @@ export class PiRunner implements Runner {
 
   async run(request: RunRequest): Promise<number> {
     const argv = this.buildArgv(request);
-    let child: ChildProcess;
-    try {
-      child = spawn(this.command, argv, { stdio: "inherit" });
-    } catch (error) {
-      throw new AgentError(`failed to run "${this.command}": ${error instanceof Error ? error.message : String(error)}`);
-    }
+    const child = spawn(this.command, argv, { stdio: "inherit" });
     return await waitForExit(child, `failed to run "${this.command}"`);
   }
 }

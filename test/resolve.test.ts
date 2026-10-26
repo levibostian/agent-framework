@@ -74,6 +74,12 @@ describe("model resolution", () => {
     writeFile(join(root, "models.json"), "[1,2]");
     expect(failure(() => resolveAgent(loaded, paths))).toContain("must be a JSON object");
   });
+
+  test("a model map that is not valid JSON names the path", () => {
+    const { root, loaded, paths } = fixture("model: ':fast:'\n");
+    writeFile(join(root, "models.json"), "{ oops");
+    expect(failure(() => resolveAgent(loaded, paths))).toContain(`failed to parse model map ${paths.models}`);
+  });
 });
 
 describe("system prompt resolution", () => {
