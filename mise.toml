@@ -1,0 +1,60 @@
+[tools]
+bun = "1.4.4"
+packslip = "1.8.0"
+
+[tasks.test]
+description = "Run the Bun test suite"
+run = "bun test"
+
+[tasks.typecheck]
+description = "Type-check the source with tsc"
+run = "bun run typecheck"
+
+[tasks.build-all]
+description = "Compile standalone executables for linux, darwin and windows (amd64 + arm64) into dist/, archived and named for VERSION (default 0.0.0)"
+run = '''
+set -eu
+VERSION="${VERSION:-0.0.0}"
+bun install --frozen-lockfile
+mkdir -p dist
+
+build() {
+  os="$1"
+  arch="$2"
+  target="$3"
+  ext="$4"
+
+  bun build --compile --minify --target="$target" ./src/index.ts --outfile "dist/agent${ext}"
+
+  if [ "$os" = "windows" ]; then
+    (cd dist && zip -q "agent_${VERSION}_${os}_${arch}.zip" "agent${ext}")
+  else
+    tar -C dist -czf "dist/agent_${VERSION}_${os}_${arch}.tar.gz" "agent${ext}"
+  fi
+
+  rm -f "dist/agent${ext}"
+}
+
+build linux amd64 bun-linux-x64 ""
+build linux arm64 bun-linux-arm64 ""
+build darwin amd64 bun-darwin-x64 ""
+build darwin arm64 bun-darwin-arm64 ""
+build windows amd64 bun-windows-x64 ".exe"
+build windows arm64 bun-windows-arm64 ".exe"
+'''
+
+[tasks.packslip]
+description = "Sign the archives in dist/ with packslip into dist/packslip.sigstore.json (no upload), keyless with the CI identity"
+run = '''
+set -eu
+: "${VERSION:?set VERSION, for example: VERSION=1.2.3 mise run packslip}"
+
+project="github.com/levibostian/agent-framework"
+packslip create \
+  --project "$project" \
+  --version "$VERSION" \
+  --bin agent \
+  --url-base "https://${project}/releases/download/${VERSION}" \
+  --out dist \
+  dist/agent_*.tar.gz dist/agent_*.zip
+'''
