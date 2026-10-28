@@ -1,0 +1,47 @@
+on:
+  push:
+    branches: [main]
+  # This tool encourages you to run it on pull requests to test the deployment process.
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # If your deploy script that you write needs to push a git commit, git tag, or create a GitHub Release.
+      pull-requests: write # If you enable pull request comments (they are enabled by default).
+      id-token: write # packslip signs keyless with the workflow identity; attest-build-provenance too
+      attestations: write # actions/attest-build-provenance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up tools
+        uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5
+
+      - id: decaf
+        uses: levibostian/decaf@366970ed9e5059c9a9cf3b3237b3f19dfa0369ad # 0.17.3
+        env:
+          # required to use 'gh' CLI in my step scripts.
+          GH_TOKEN: ${{ github.token }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          get_latest_release_current_branch: decaf shebang https://github.com/levibostian/decaf-script-github-releases.git/shebang.sh@1.3.0 get
+          get_next_release_version: decaf shebang https://github.com/levibostian/decaf-script-conventional-commits.git/shebang.sh@0.3.1
+          deploy: |
+            VERSION="{{nextVersionName}}" mise run build-all
+            VERSION="{{nextVersionName}}" mise run packslip
+            decaf shebang https://github.com/levibostian/decaf-script-github-releases.git/shebang.sh@1.3.0 set-assets "dist/agent_{{nextVersionName}}_linux_amd64.tar.gz" "dist/agent_{{nextVersionName}}_linux_arm64.tar.gz" "dist/agent_{{nextVersionName}}_darwin_amd64.tar.gz" "dist/agent_{{nextVersionName}}_darwin_arm64.tar.gz" "dist/agent_{{nextVersionName}}_windows_amd64.zip" "dist/agent_{{nextVersionName}}_windows_arm64.zip" "dist/packslip.sigstore.json"
+            decaf shebang https://github.com/levibostian/decaf-script-github-releases.git/shebang.sh@1.3.0 set
+
+      # Attest the release archives that decaf just built (dist/ persists across
+      # steps). Only on a real push (PR runs are decaf test-mode simulations, and
+      # fork PRs don't get id-token/attestations write), and only when a release
+      # was actually deployed. decaf sets new_release_version only after a deploy;
+      # it is empty when no commits need deploying, so there are no dist/ archives
+      # to attest and the step would fail.
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        if: github.event_name == 'push' && steps.decaf.outputs.new_release_version != ''
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
