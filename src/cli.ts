@@ -1,6 +1,6 @@
 import { AgentError, EXIT_USAGE } from "./errors.ts";
 
-export type Command = "run" | "list" | "edit";
+export type Command = "run" | "list" | "edit" | "spec";
 
 /** Parsed command line. Flags may appear before or after the command and its arguments. */
 export interface Args {
@@ -13,12 +13,13 @@ export interface Args {
   help: boolean;
 }
 
-const COMMANDS: readonly Command[] = ["run", "list", "edit"];
+const COMMANDS: readonly Command[] = ["run", "list", "edit", "spec"];
 
 const USAGE = `Usage:
   agent run <name> [prompt]    Run an agent: one-shot with a prompt, interactive without.
   agent list [--json]          List the agents in the agent root.
   agent edit <name>            Open an agent's directory in your editor.
+  agent spec                   Print the agent spec: what an agent is and how it resolves.
 
 Options:
   --home <dir>     Agent root (default: $AGENT_HOME, else ~/.agent)
@@ -59,6 +60,11 @@ the config file. The config is never parsed or rewritten.
 Options:
   --home <dir>     Agent root (default: $AGENT_HOME, else ~/.agent)
   --models <file>  Model map (default: $AGENT_MODELS, else <home>/models.json)`;
+    case "spec":
+      return `Usage: agent spec
+
+Print the agent spec: naming, the config schema and its rules, model and skill
+resolution, and the normalized run request. Read-only and offline.`;
     default:
       return USAGE;
   }
@@ -134,8 +140,8 @@ function validate(args: Args): void {
   }
 
   const extra = args.positionals.length;
-  if (command === "list") {
-    if (extra > 0) throw usageError("list takes no arguments", command);
+  if (command === "list" || command === "spec") {
+    if (extra > 0) throw usageError(`${command} takes no arguments`, command);
     return;
   }
   if (extra === 0) throw usageError(`${command} requires an agent name`, command);

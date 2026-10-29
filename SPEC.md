@@ -205,14 +205,16 @@ and it invokes the runtime as a subprocess so the CLI stays decoupled from it.
 
 ## Consumer commands
 
-Three commands consume this spec. They are listed here so their contract is defined once;
-their UX belongs to the CLI.
+The commands below are built on this spec. They are listed here so their contract is defined
+once; their UX belongs to the CLI.
 
 - **run** — resolve an agent and execute it, one-shot or interactively.
 - **list** — enumerate the agent root and report each agent's name and `description`. Read
   only: it must not execute `system-cmd`, resolve models, or touch the network.
 - **edit** — open an agent's directory in the user's editor so its config can be changed.
   It never parses or rewrites the config.
+- **spec** — print this document. Read-only and offline: it reads no agent root and no model
+  map. This is the single source of truth for what an agent is; other documents point here.
 
 ## Maintenance note
 

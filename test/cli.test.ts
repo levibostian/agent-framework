@@ -48,7 +48,7 @@ describe("parseArgs", () => {
   });
 
   test("every command help is non-empty and names its command", () => {
-    for (const command of ["run", "list", "edit"] as const) {
+    for (const command of ["run", "list", "edit", "spec"] as const) {
       expect(helpText(command)).toContain(`agent ${command}`);
     }
   });
@@ -64,6 +64,7 @@ describe("parseArgs", () => {
     expect(usageError("run").message).toContain("requires an agent name");
     expect(usageError("run", "a", "b", "c").message).toContain("too many arguments");
     expect(usageError("list", "hello").message).toContain("takes no arguments");
+    expect(usageError("spec", "hello").message).toContain("takes no arguments");
     expect(usageError("edit").message).toContain("requires an agent name");
     expect(usageError("edit", "a", "b").message).toContain("too many arguments");
   });
@@ -71,5 +72,7 @@ describe("parseArgs", () => {
   test("command-specific flags are rejected elsewhere", () => {
     expect(usageError("list", "--dry-run").message).toContain("--dry-run is only valid for run");
     expect(usageError("run", "--json", "a").message).toContain("--json is only valid for list");
+    expect(usageError("spec", "--dry-run").message).toContain("--dry-run is only valid for run");
+    expect(usageError("spec", "--json").message).toContain("--json is only valid for list");
   });
 });

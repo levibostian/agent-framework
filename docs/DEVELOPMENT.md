@@ -8,7 +8,7 @@ Contributor notes. What the source cannot say about itself.
 argv ──► src/index.ts ──► src/cli.ts            parse, dispatch, exit code
               │
               ▼
-        src/commands/{run,list,edit}.ts          one command each
+        src/commands/{run,list,edit,spec}.ts     one command each
               │
               ├─► src/config/load.ts ──► src/config/schema.ts      disk → AgentConfig
               │        │
@@ -36,7 +36,8 @@ them is runtime-agnostic; everything right of them is one adapter.
 5. `PiRunner.run` spawns `pi` with `stdio: "inherit"` and returns its exit code.
 
 `agent list` stops at step 2 and reads only `description`. `agent edit` stops after the
-name check and never parses the config.
+name check and never parses the config. `agent spec` skips the diagram entirely: it prints
+`SPEC.md`, embedded at build time.
 
 ## Key design decisions
 
@@ -116,6 +117,9 @@ tests able to point at a temp directory without touching the user's real agents.
   sorting keeps the table stable between runs.
 - **The system prompt is passed as an argv value**, not a temp file. Prompts larger than
   the OS argv limit are a known, accepted limitation.
+- **`SPEC.md` is the single source of the spec.** `src/commands/spec.ts` imports it with a Bun
+  `with { type: "text" }` import, so `agent spec` prints exactly the repo document and the two
+  cannot drift. Editing the spec means editing `SPEC.md`; no copy lives in the source.
 - **Pi's flags are the adapter's whole surface.** `--print`, `--model`, `--thinking`,
   `--system-prompt`, `--tools`, `--no-tools`, `--skill`. Changing them means editing
   `src/runtime/pi.ts` and nothing else.
