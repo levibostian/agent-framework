@@ -31,7 +31,7 @@ them is runtime-agnostic; everything right of them is one adapter.
 
 1. `src/index.ts` → `parseArgs`, then `resolvePaths` reads `--home`/`--models`, env, defaults once.
 2. `runCommand` → `loadAgent`: validate the name, find the directory, pick the one config file, parse, `validateConfig`.
-3. `resolveAgent`: `system` or `system-cmd` → system prompt; `:key:` → model map; each skill → absolute path; `tools` copied as-is.
+3. `resolveAgent`: `system` or `system-cmd` → system prompt; `:key:` → model map; each skill → absolute path; `tools` and `thinking` copied as-is.
 4. `getRunner()` → `PiRunner.buildArgv` → `pi` argv, or `describe()` when `--dry-run`.
 5. `PiRunner.run` spawns `pi` with `stdio: "inherit"` and returns its exit code.
 
@@ -64,6 +64,14 @@ The adapter emits one `--skill` per configured path and never `--no-skills`. Run
 agent inside a repo is how that repo supplies its own skills, so the configured set has
 to layer on top of discovery rather than replace it. Reintroducing `--no-skills` here
 would break that silently.
+
+### The adapter validates the thinking level, and the schema does not
+
+Pi warns about an unknown `--thinking` level and then exits `0` with its default, so a
+typo would silently produce a different agent. The adapter therefore checks the value
+against Pi's level list and throws. The check lives in `src/runtime/pi.ts`, not in
+`src/config/schema.ts`: the level names are Pi's, and a second runtime would have its own.
+The schema only guarantees the field is a string.
 
 ### Skill paths are resolved against the agent directory, and only stat'ed
 
@@ -108,7 +116,7 @@ tests able to point at a temp directory without touching the user's real agents.
   sorting keeps the table stable between runs.
 - **The system prompt is passed as an argv value**, not a temp file. Prompts larger than
   the OS argv limit are a known, accepted limitation.
-- **Pi's flags are the adapter's whole surface.** `--print`, `--model`,
+- **Pi's flags are the adapter's whole surface.** `--print`, `--model`, `--thinking`,
   `--system-prompt`, `--tools`, `--no-tools`, `--skill`. Changing them means editing
   `src/runtime/pi.ts` and nothing else.
 - **Adding a runtime** means adding a case to `getRunner` in `src/runtime/index.ts`. If

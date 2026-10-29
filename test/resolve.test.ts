@@ -174,6 +174,16 @@ describe("skill resolution", () => {
   });
 });
 
+describe("thinking resolution", () => {
+  test("is carried through only when present", () => {
+    const withThinking = fixture("model: m\nthinking: high\n");
+    expect(resolveAgent(withThinking.loaded, withThinking.paths).thinking).toBe("high");
+
+    const without = fixture("model: m\n");
+    expect(resolveAgent(without.loaded, without.paths).thinking).toBeUndefined();
+  });
+});
+
 describe("description", () => {
   test("is carried through only when present", () => {
     const withDescription = fixture("model: m\ndescription: Greets people.\n");

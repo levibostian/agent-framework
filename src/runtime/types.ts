@@ -13,6 +13,9 @@ export interface ResolvedAgent {
   skills: string[];
   /** Literal model id; templates already resolved. */
   model: string;
+  /** Runtime thinking level. `undefined` means the runtime's default. Names are the
+   *  runtime's, not the spec's; the adapter rejects an unknown level. */
+  thinking?: string;
 }
 
 export interface RunRequest {

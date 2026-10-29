@@ -27,6 +27,8 @@ prompt lives in your shell history.
   command and use its stdout.
 - **Per-agent tools and skills.** Configured skills are added on top of whatever the
   runtime discovers in your working directory, never instead of it.
+- **Per-agent thinking level.** `thinking:` picks how hard the model reasons for this
+  agent; a bad value fails loudly instead of silently falling back.
 - **See before you run.** `--dry-run` prints the exact command, shell-escaped.
 - **Fails loudly.** Unknown config keys, missing model keys, and missing skill paths are
   errors with the file and the path in the message.
@@ -124,6 +126,7 @@ system: Review diffs for correctness.         # static system prompt
 tools: [bash, read, grep]                     # runtime tools to enable
 skills: ["./skills/diff-style", "~/shared"]   # extra skills, additive
 model: ":deep:"                               # or a literal model id
+thinking: high                                # runtime thinking level
 ```
 
 | Field | Required | Meaning |
@@ -134,8 +137,10 @@ model: ":deep:"                               # or a literal model id
 | `system-cmd` | no | Command whose trimmed stdout becomes the system prompt. Runs through `/bin/sh -c` in your current directory. |
 | `tools` | no | Tools to enable. Omit for the runtime's default set; `[]` means no tools. |
 | `skills` | no | Extra skill files or directories. |
+| `thinking` | no | Runtime thinking level. Omit for the runtime's default. With Pi, one of `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. |
 
-Unknown fields are an error, and so is setting both `system` and `system-cmd`.
+Unknown fields are an error, and so is setting both `system` and `system-cmd`. An unknown
+`thinking` level is an error too, rather than a silent fall back to the default.
 
 **Skills** are additive. Configured paths are resolved relative to the agent directory
 (a leading `~` means your home), and the runtime still discovers skills in your working

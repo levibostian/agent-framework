@@ -36,7 +36,7 @@ describe("validateName", () => {
 describe("loadAgent", () => {
   test("loads a json config", () => {
     const root = tempDir();
-    writeAgent(root, "hello", "agent.json", JSON.stringify({ model: "m", description: "d", tools: ["bash"] }));
+    writeAgent(root, "hello", "agent.json", JSON.stringify({ model: "m", description: "d", tools: ["bash"], thinking: "high" }));
 
     const loaded = loadAgent(pathsFor(root), "hello");
     expect(loaded.name).toBe("hello");
@@ -44,6 +44,7 @@ describe("loadAgent", () => {
     expect(loaded.config.model).toBe("m");
     expect(loaded.config.description).toBe("d");
     expect(loaded.config.tools).toEqual(["bash"]);
+    expect(loaded.config.thinking).toBe("high");
   });
 
   test("loads a yaml config and a yml config", () => {
@@ -96,6 +97,7 @@ describe("loadAgent", () => {
       ["mutually exclusive", { model: "m", system: "a", "system-cmd": "b" }],
       ["must be an array", { model: "m", tools: "bash" }],
       ["must be an array", { model: "m", skills: [1] }],
+      ["must be a string", { model: "m", thinking: 3 }],
     ];
 
     for (const [expected, config] of cases) {

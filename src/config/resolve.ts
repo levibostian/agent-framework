@@ -26,6 +26,7 @@ export function resolveAgent(loaded: LoadedAgent, paths: Paths, options: Resolve
   };
   if (config.description !== undefined) agent.description = config.description;
   if (config.tools !== undefined) agent.tools = [...config.tools];
+  if (config.thinking !== undefined) agent.thinking = config.thinking;
   return agent;
 }
 
