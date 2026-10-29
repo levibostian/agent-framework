@@ -8,9 +8,10 @@ export interface AgentConfig {
   tools?: string[];
   skills?: string[];
   model: string;
+  thinking?: string;
 }
 
-const KNOWN_KEYS = ["description", "system", "system-cmd", "tools", "skills", "model"] as const;
+const KNOWN_KEYS = ["description", "system", "system-cmd", "tools", "skills", "model", "thinking"] as const;
 
 function fail(source: string, message: string): never {
   throw new AgentError(`${source}: ${message}`);
@@ -68,5 +69,7 @@ export function validateConfig(raw: unknown, source: string): AgentConfig {
   if (tools !== undefined) config.tools = tools;
   const skills = optionalStringArray(record.skills, "skills", source);
   if (skills !== undefined) config.skills = skills;
+  const thinking = optionalString(record.thinking, "thinking", source);
+  if (thinking !== undefined) config.thinking = thinking;
   return config;
 }

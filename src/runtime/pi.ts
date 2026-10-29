@@ -1,6 +1,10 @@
 import { spawn } from "node:child_process";
+import { AgentError } from "../errors.ts";
 import { shellQuote, waitForExit } from "../process.ts";
 import type { RunRequest, Runner } from "./types.ts";
+
+/** Pi's thinking levels. Pi silently ignores an unknown level, so the adapter checks it. */
+const THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 
 /**
  * Runs an agent on Pi by spawning `pi` as a subprocess. All Pi-specific knowledge
@@ -15,6 +19,7 @@ export class PiRunner implements Runner {
 
     if (prompt !== undefined) argv.push("--print");
     argv.push("--model", agent.model);
+    if (agent.thinking !== undefined) argv.push("--thinking", checkThinkingLevel(agent.thinking, agent.name));
     if (agent.systemPrompt !== "") argv.push("--system-prompt", agent.systemPrompt);
     if (agent.tools !== undefined) {
       // An empty list means no tools; an absent field means the runtime's default set.
@@ -36,4 +41,17 @@ export class PiRunner implements Runner {
     const child = spawn(this.command, argv, { stdio: "inherit" });
     return await waitForExit(child, `failed to run "${this.command}"`);
   }
+}
+
+/**
+ * Reject a level Pi would only warn about. Pi exits 0 on an unknown level and falls back
+ * to its default, which would turn a typo into a silently different agent.
+ */
+function checkThinkingLevel(level: string, agentName: string): string {
+  if (!(THINKING_LEVELS as readonly string[]).includes(level)) {
+    throw new AgentError(
+      `agent "${agentName}": unknown thinking level "${level}" (valid: ${THINKING_LEVELS.join(", ")})`,
+    );
+  }
+  return level;
 }

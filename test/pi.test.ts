@@ -105,6 +105,22 @@ describe("PiRunner.buildArgv", () => {
     expect(empty).not.toContain("--tools");
   });
 
+  test("thinking is emitted as --thinking straight after --model", () => {
+    const argv = runner.buildArgv({ agent: agent({ thinking: "high" }), prompt: "hi" });
+    expect(argv.slice(0, 4)).toEqual(["--print", "--model", "openrouter/google/gemini-2.5-flash", "--thinking"]);
+    expect(argv[4]).toBe("high");
+  });
+
+  test("an absent thinking level is omitted so the runtime default applies", () => {
+    expect(runner.buildArgv({ agent: agent(), prompt: "hi" })).not.toContain("--thinking");
+  });
+
+  test("an unknown thinking level errors with the agent and the valid levels", () => {
+    expect(() => runner.buildArgv({ agent: agent({ thinking: "bogus" }), prompt: "hi" })).toThrow(
+      'agent "hello": unknown thinking level "bogus" (valid: off, minimal, low, medium, high, xhigh, max)',
+    );
+  });
+
   test("one --skill per resolved path, and discovery is never disabled", () => {
     const argv = runner.buildArgv({ agent: agent({ skills: ["/a", "/b"] }), prompt: "hi" });
     expect(argv.filter((arg) => arg === "--skill")).toHaveLength(2);

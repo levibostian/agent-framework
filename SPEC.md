@@ -70,6 +70,7 @@ A name is valid when it is non-empty and matches `[A-Za-z0-9._-]+`. Names must n
 | `tools` | string[] | no | Names of runtime built-in tools to enable (for example `bash`, `read`, `write`, `grep`). Omitted means "runtime default tool set". |
 | `skills` | string[] | no | Paths to skill files or directories to load for this agent. Omitted means "no configured skills". See [Skill resolution](#skill-resolution). |
 | `model` | string | yes | Model identifier, either literal or a template reference. See [Model resolution](#model-resolution). |
+| `thinking` | string | no | Runtime thinking level for this agent. Omitted means the runtime's default. The spec does not define the universe of level names; the adapter maps the value to its runtime and reports an unknown level as an error. |
 
 Unknown fields are an error. Silently ignoring a typo turns a config bug into a silently
 different agent.
@@ -94,6 +95,8 @@ uses the runtime's own default system prompt.
 - `skills` adds skill locations on top of whatever the runtime discovers by itself. It never
   removes or replaces discovery. An empty array is equivalent to omitting the field: this
   agent configures no additional skills.
+- `thinking` is passed to the runtime verbatim. The spec names no levels; the adapter owns
+  the valid set and rejects a value the runtime would otherwise ignore.
 
 ## Model resolution
 
@@ -165,6 +168,7 @@ ResolvedAgent {
   tools?:       string[]        // undefined means runtime default; [] means none
   skills:       string[]        // absolute paths, ~ expanded, [] when unconfigured
   model:        string          // literal, templates already resolved
+  thinking?:    string          // undefined means the runtime's default level
 }
 ```
 
@@ -196,8 +200,8 @@ An adapter binds this spec to a runtime. It must:
 The adapter is the only place runtime names appear. Adding a runtime means adding an
 adapter, not editing this spec. The default adapter today is Pi; it maps `system` to the
 runtime's system-prompt flag, `tools` to its tool-selection flag, `skills` to its skill
-flag (one per path), and `model` to its model flag, and it invokes the runtime as a
-subprocess so the CLI stays decoupled from it.
+flag (one per path), `model` to its model flag, and `thinking` to its thinking-level flag,
+and it invokes the runtime as a subprocess so the CLI stays decoupled from it.
 
 ## Consumer commands
 

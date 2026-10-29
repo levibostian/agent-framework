@@ -72,6 +72,31 @@ describe("agent run", () => {
     ]);
   });
 
+  test("thinking becomes --thinking right after the model", () => {
+    const root = tempDir();
+    writeAgent(root, "hello", "agent.yaml", "model: m\nthinking: high\n");
+    const record = join(root, "record.txt");
+    const bin = fakePi(record);
+
+    const result = runCli(["run", "hello", "hi"], { home: root, path: sandboxedPath(bin) });
+
+    expect(result.exitCode).toBe(0);
+    expect(recorded(record)).toEqual(["--print", "--model", "m", "--thinking", "high", "--", "hi"]);
+  });
+
+  test("an unknown thinking level exits 1 before spawning the runtime", () => {
+    const root = tempDir();
+    writeAgent(root, "hello", "agent.yaml", "model: m\nthinking: bogus\n");
+    const record = join(root, "record.txt");
+    const bin = fakePi(record);
+
+    const result = runCli(["run", "hello", "hi"], { home: root, path: sandboxedPath(bin) });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('unknown thinking level "bogus"');
+    expect(existsSync(record)).toBe(false);
+  });
+
   test("the runtime's exit code is propagated", () => {
     const root = tempDir();
     writeAgent(root, "hello", "agent.yaml", "model: m\n");
