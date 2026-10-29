@@ -3,6 +3,7 @@ import { parseArgs, helpText } from "./cli.ts";
 import { editCommand } from "./commands/edit.ts";
 import { listCommand } from "./commands/list.ts";
 import { runCommand } from "./commands/run.ts";
+import { specCommand } from "./commands/spec.ts";
 import { AgentError, EXIT_CONFIG, EXIT_OK } from "./errors.ts";
 import { resolvePaths } from "./paths.ts";
 
@@ -13,6 +14,8 @@ async function main(argv: string[]): Promise<number> {
     process.stdout.write(`${helpText(args.command)}\n`);
     return EXIT_OK;
   }
+
+  if (args.command === "spec") return specCommand();
 
   const paths = resolvePaths({ home: args.home, models: args.models });
 

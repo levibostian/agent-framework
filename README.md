@@ -106,6 +106,17 @@ terminal editor opens its file browser and the config is one keystroke away.
 
 `edit` never parses the config, so it works on a config that is too broken to run.
 
+### `agent spec`
+
+Prints the agent spec: naming, the config schema and its rules, model and skill resolution,
+and the normalized run request. It is the same [SPEC.md](SPEC.md) the repo ships, embedded at
+build time, so the command and the document cannot drift. Read-only and offline: it never
+reads the agent root or the model map.
+
+```sh
+agent spec
+```
+
 ### Common options
 
 | Option | Meaning |
