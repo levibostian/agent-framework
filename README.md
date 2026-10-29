@@ -174,6 +174,16 @@ you — trusting a repo is your call. Configured `skills` are always loaded.
 A value is a template reference only when it is exactly `:key:`. Anything else is passed
 to the runtime verbatim, and a missing file, missing key or non-string value is an error.
 
+## Agent skill
+
+This repo ships an [Agent Skills](https://agentskills.io/specification) skill,
+[`skills/agent-framework`](skills/agent-framework/SKILL.md), that teaches a coding agent how
+to create and validate agents with this CLI.
+
+```sh
+npx skills add levibostian/agent-framework
+```
+
 ## Development
 
 ```sh
