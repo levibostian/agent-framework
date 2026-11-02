@@ -39,7 +39,7 @@ jobs:
       # was actually deployed. decaf sets new_release_version only after a deploy;
       # it is empty when no commits need deploying, so there are no dist/ archives
       # to attest and the step would fail.
-      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
         if: github.event_name == 'push' && steps.decaf.outputs.new_release_version != ''
         with:
           subject-path: |
