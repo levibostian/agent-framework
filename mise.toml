@@ -1,6 +1,6 @@
 [tools]
 bun = "1.4.4"
-packslip = "1.11.3"
+packslip = "1.11.4"
 
 [tasks.test]
 description = "Run the Bun test suite"
